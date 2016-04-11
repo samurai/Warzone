@@ -43,7 +43,7 @@ class assets:
 			return 0
 		id = self.assetExists(ip)
 		if id:
-			return id
+			return int(id[0][0])
 		if not timestamp:
 			timestamp = time.time()
 		sql = "INSERT INTO asset (ip, found) VALUES ('%s', %d) RETURNING id" % ( ip, timestamp )
@@ -51,7 +51,7 @@ class assets:
 		self.cur.execute(sql)
 		self.conn.commit()
 		data = self.cur.fetchone()
-		return data[0]
+		return int(data[0])
 
 
 	def getAllAssets(self):
@@ -75,3 +75,26 @@ class assets:
 		self.cur.execute(sql)
 		data = self.cur.fetchall()
 		return data
+
+
+	def addAssetPort(self, asset_id, port, port_type, service, timestamp, scan_type):
+		sql = "SELECT count(*) FROM ports WHERE asset_id=%d AND port=%d AND type='%s' AND detected=%d AND detection_type='%s'" % ( asset_id, port, port_type, timestamp, scan_type )
+		self.cur.execute(sql)
+		data = self.cur.fetchone()
+		if data[0] == 0:
+			sql = "INSERT INTO ports ( asset_id, port, type, detected, detection_type, service) VALUES (%d, %d, '%s', %d, '%s', '%s')"
+			self.cur.execute(sql % (asset_id, port, port_type, timestamp, scan_type, service))
+			self.conn.commit()
+
+	def getAssetPorts(self, asset_id):
+		sql = "SELECT port, type, detected, detection_type, service FROM ports where asset_id=%d ORDER BY detected DESC" % ( asset_id )
+		self.cur.execute(sql)
+		data = self.cur.fetchall()
+		ports = {}
+		for row in data:
+			port = row[1]+"/"+str(row[0])
+			if port not in ports:
+				ports[port] = {'history':[]}
+			ports[port]['history'].append((row[2],row[3]))
+			ports[port]['service'] = row[4]
+		return ports
