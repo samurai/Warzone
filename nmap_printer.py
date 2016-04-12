@@ -12,10 +12,11 @@ import sys
 
 file = sys.argv[1]
 print file
-scan_type = "_".join(file.split("_")[0:2])
-timestamp = file.split("_")[2]
+scan_type = file.split("-")[0]
+timestamp = file.split("-")[1]
 print timestamp
 print scan_type
+print timestamp
 timestamp = time.mktime(time.strptime(timestamp,"%Y%m%d%H%M"))
 print file
 data = xmltodict.parse(open(file,"r"))['nmaprun']
