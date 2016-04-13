@@ -60,6 +60,35 @@ class assets:
 		data = self.cur.fetchall()
 		return data
 
+	def getAssetsByIDs(self, ids):
+		if type(ids) != type([]):
+			return []
+		tmp = []
+		for item in ids:
+			tmp.append(str(item))
+		sql = "SELECT * FROM asset WHERE id IN ('" + "','".join(tmp) + "')"
+		self.cur.execute(sql)
+		return self.cur.fetchall()
+
+
+	def getActiveAssets(self):
+		sql_up = "select distinct asset_id,max(detected) from status where status='up' group by asset_id;"
+		sql_down = "select distinct asset_id,max(detected) from status where status='down' group by asset_id;"
+		self.cur.execute(sql_up)
+		res = self.cur.fetchall()
+		up = {}
+		for row in res:
+			id = row[0]
+			ts = row[1]
+			up[id] = ts
+		self.cur.execute(sql_down)
+		res = self.cur.fetchall()
+		for row in res:
+			if row[0] in up and row[1] > up[row[0]]:
+				del(up[row[0]])
+		ret = self.getAssetsByIDs( up.keys() )
+		return ret
+
 
 	def updateStatus(self, asset_id, timestamp, scan_type, status):
 		sql = "SELECT count(*) FROM status WHERE asset_id=%d AND detection_type='%s' and detected=%d and status='%s'" % ( asset_id, scan_type, timestamp, status)
