@@ -34,7 +34,14 @@ for process_dir in process_dirs:
 			print "%s - %s - %s" % ( scan_type, timestamp, extra_info)	
 
 			found_assets = []
-			data = xmltodict.parse(open(file,"r"))['nmaprun']
+
+			try:  ## sometimes the following fails if nmap has partially written an XML file
+				fh = open(file,"r")
+				data = xmltodict.parse(fh)['nmaprun']
+				fh.close()
+			except:
+				continue
+
 			for host in data['host']:
 				ip = host['address']['@addr']
 				asset_id = ass.addAsset(host['address']['@addr'], timestamp)

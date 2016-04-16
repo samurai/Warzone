@@ -89,6 +89,13 @@ class assets:
 		ret = self.getAssetsByIDs( up.keys() )
 		return ret
 
+	def getLastStatus(self, asset_id):
+		if not type(asset_id) == type(1):
+			return []
+		sql = "SELECT * FROM status WHERE asset_id = %d ORDER BY id DESC LIMIT 1" % ( asset_id) 
+		self.cur.execute(sql)
+		return self.cur.fetchone()
+
 
 	def updateStatus(self, asset_id, timestamp, scan_type, status):
 		sql = "SELECT count(*) FROM status WHERE asset_id=%d AND detection_type='%s' and detected=%d and status='%s'" % ( asset_id, scan_type, timestamp, status)
